@@ -14,7 +14,8 @@ Deno.serve(async (req) => {           //request async
  
   const url = new URL(req.url)       // declare url value
   const id = url.searchParams.get('id') // get id from URL request
- 
+
+
   if (!id) {                        // if request unidentified id (input) -> return headers '400 Missing id'
     return new Response('Missing id', { status: 400, headers: corsHeaders })
   }
@@ -47,7 +48,8 @@ Deno.serve(async (req) => {           //request async
 4. What HTTP error would fire if a required input is missing?
    error message 400 - Missing id
 
-
+> Phần lớn đúng rồi nha em, có 1 điểm nâng cao thêm cho tương lai.
+> Tên bài là `PATCH /interviews/:id` - tức id nằm trên path - nhưng code thật lại đọc `url.searchParams.get('id')`, nghĩa là id đang nằm ở query string (`?id=...`) chứ không phải path param thật. Title với cách implement đang lệch nhau á em.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -107,3 +109,6 @@ Deno.serve(async (req) => {
 4. What HTTP error would fire if a required input is missing?
    error message 400 - Missing id
    error message 404 - Missing data
+
+> Phần lớn đúng rồi nha em, có 1 điểm nâng cao thêm cho tương lai.
+> Case "id không tồn tại" thực ra sẽ trả về 500 chứ không phải 404 đâu - vì `.single()` throw error ngay khi không match row nào, nên code rơi vào nhánh `if (error)` trước, không bao giờ chạy tới `if (!data)` được.

@@ -15,6 +15,7 @@ Deno.serve (async (req) => {
       return new Response ('Method not allowed', {status: 405, headers: corsHeaders })  
     }
 
+    // Đây là bug em note ở Example A luôn đó anh: id nên nằm trên path (VD /interview-lists/:id) vì assignment yêu cầu "correct id-in-path usage (not query param)", nhưng ở đây lại lấy id qua searchParams (query param), thường chỉ những thông tin lọc như là thứ tự sắp xếp, range giá... thì mới hay để vào searchParams thui nha anh
     const url = new URL(req.url)
     const id = url.searchParams.get('id')
 
@@ -22,6 +23,9 @@ Deno.serve (async (req) => {
       return new Response ('Missing id', { status: 400, headers: corsHeaders})
     }
 
+    // Chỗ này có mấy vấn đề á anh:
+    // 1. `.from('interview list')` tên bảng có khoảng trắng, nên query này sẽ fail ngay.
+    // 2. `.select('id')` rồi mới `.update(...)` - thứ tự bị ngược, `.select()` trả về 1 builder khác không có `.update()`, nên dòng này rất dễ dính error trước khi chạy tới được `if (error)`. Muốn vừa update vừa lấy lại row thì phải là `.update({...}).eq(...).select()` - `.select()` đứng SAU `.update()` nha anh.
     const body = await req.json()
     const { data, error} = await supabase
     .from('interview list')
@@ -33,6 +37,8 @@ Deno.serve (async (req) => {
       return new Response (error.message, { status: 500,
         headers: corsHeaders })
     }
+    // Cái dụ này (không có `.select()` sau `.update()`) Postgrest sẽ trả `data: null` bất kể update có match được row hay không nha anh, nên `if (!data)` này sẽ luôn đúng, tức là mỗi lần update thành công vẫn bị trả về 404.
+
     if (!data) {
       return new Response('Data not found', { status: 404, headers: corsHeaders })
     }
@@ -56,6 +62,7 @@ Deno.serve (async (req) => {
 /*
 1. The endpoint path and method
 	1. Path: http://127.0.0.1:54321/functions/v1/interview-lists?=1
+	// [Nam] Path này đang là query param (với lại `?=1` còn thiếu tên key, phải là `?id=1` mới đúng cú pháp query string). Theo assignment thì id phải nằm trên path, VD `/interview-lists/:id`, để match với route Part 2 yêu cầu.
 	2. Method: PATCH
 2. What the request body or URL params contain
 	1. id của interview trong interview list

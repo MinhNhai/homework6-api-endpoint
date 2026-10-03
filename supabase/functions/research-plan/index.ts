@@ -22,6 +22,7 @@ Deno.serve (async (req) => {
       return new Response ('Missing id', { status: 400, headers: corsHeaders})
     }
 
+    // Chỗ này bị lặp lại đúng lỗi mình note ở Lesson 5 lun anh: research_questions đang nằm lồng trong interviews, nhưng research question thực ra thuộc về research_plan (set 1 lần cho cả plan), không phải riêng cho từng interview. Research_questions với interviews nên đứng ngang hàng nhau nha anh, cả hai đều thuộc research_plan
     const { data, error} = await supabase
     .from('research-plan')
     .select(`
@@ -41,6 +42,7 @@ Deno.serve (async (req) => {
       return new Response (error.message, { status: 500,
         headers: corsHeaders })
     }
+    // Query này không có `.single()` nên `data` luôn là mảng, kể cả không match row nào cũng ra `[]` chứ không phải `null` - mà `![]` trong JS là `false`, nên `if (!data)` dưới đây là dead code, y như bug `.single()` ở Example B, chỉ ngược chiều thôi.
     if (!data) {
       return new Response('Data not found', { status: 404, headers: corsHeaders })
     }
